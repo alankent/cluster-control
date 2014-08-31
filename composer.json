@@ -1,0 +1,26 @@
+{
+    "name": "alankent/cluster-control",
+    "description": "Uses etcd to track available services",
+    "homepage": "http://www.github.com/alankent/cluster-control",
+    "keywords": ["php", "etcd", "distributed", "services"],
+    "type": "library",
+    "authors": [
+        {
+            "name": "Alan Kent"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.0",
+        "linkorb/etcd-php": "dev-master"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "3.7.*"
+    },
+    "autoload": {
+        "psr-0": {
+            "AlanKent\\": "src/"
+        }
+    },
+    "bin": ["bin/etcd-php"],
+    "license": "???"
+}

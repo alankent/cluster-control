@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: akent
- * Date: 8/31/14
- * Time: 7:58 PM
- */
 
 namespace AlanKent\ClusterControl\Handlers;
 

@@ -42,7 +42,7 @@ class ClusterPrepareCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output)
     {
         $conf = $input->getOption('conf');
-        $cluster = $input->getArgument('cluster');
+        $cluster = $input->getOption('cluster');
 
         $clusterControl = new ClusterControl($conf);
 

@@ -61,7 +61,9 @@ class ClusterControl
 
         $server = $config['etcd']['server'];
 
-        $this->clusters = array();
+        $this->clusterPaths = array();
+        $this->clusterHandlers = array();
+
         foreach ($config['clusters'] as $cluster) {
             $this->clusterPaths[$cluster['name']] = $cluster['path'];
             $handlerName = $cluster['handler'];
@@ -70,7 +72,7 @@ class ClusterControl
             if (!($handler instanceof Handler)) {
                 throw new \Exception("Specified handler '$handlerName' does not implement the Handler interface.");
             }
-            $this->clusterHandlers[$handlerName] = $handler;
+            $this->clusterHandlers[$cluster['name']] = $handler;
         }
 
         $this->etcd = new EtcdClient($server);
@@ -136,41 +138,42 @@ class ClusterControl
      * @return array Returns array with 'index' holding an integer and 'members' holding
      * an array of strings, or null if failed to read directory.
      */
-    public function readClusterMembers(string $cluster, $waitIndex)
+    public function readClusterMembers($cluster, $waitIndex)
     {
-        $url = $this->clusterPaths[$cluster];
+        $options = ['recursive' => 'true'];
         if ($waitIndex != null) {
-            $url .= '?wait=true&waitIndex=' . $waitIndex;
+            $options['wait'] = 'true';
+            $options['waitIndex'] = $waitIndex;
         }
-        $body = $this->etcd->doRequest($url);
-        return array();
+        $node = $this->etcd->getNode($this->clusterPaths[$cluster], $options);
+echo "NODE: ";
+var_dump($node);
+
+$index = $node['modifiedIndex'];
+        $members = array();
+        foreach ($node['nodes'] as $dir) {
+            $path = $dir['key'];
+            $key = substr(strrchr($path, '/'), 1);
+            $members[] = $key;
+
+ if ($dir['modifiedIndex'] > $index) {
+$index = $dir['modifiedIndex'];
+}
+        }
+
+echo "index = $index\n";
+        return ['index' => $index, 'members' => $members];
     }
 
     /**
      * Look up the list of current cluster members, write that out to a config file,
      * the return the wait index for cc:clusterwatch to start from.
      * @param string $cluster The cluster to process.
+     * @param array $clusterMembers The members that are a part of the cluster.
      * @return void
      */
-    public function writeClusterConfig(string $cluster, array $clusterMembers)
+    public function writeClusterConfig($cluster, $clusterMembers)
     {
         $this->clusterHandlers[$cluster]->writeConfigFile($clusterMembers);
     }
 }
-
-
-//$client = new EtcdClient($server);
-/*
-$query = array('wait' => 'true');
-
-if ($recursive) {
-    $query['recursive'] = 'true';
-}
-
-if ($afterIndex) {
-    $query['waitIndex'] = $afterIndex;
-}
-
-$data = $client->get($key, $query);
-$output->writeln($data);
-*/

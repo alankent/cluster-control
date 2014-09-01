@@ -9,21 +9,16 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class HeartbeatCommand extends Command
+class WatchKeyCommand extends Command
 {
     protected function configure()
     {
         $this
-            ->setName('cc:heartbeat')
+            ->setName('cc:watchkey')
             ->setDescription(
-                'Periodically update etcd entry with a TTL to indicate we are still alive.'
+                'Watch the containers key, returning when key is deleted.'
             )
             ->addOption(
-                'debug',
-                null,
-                InputOption::VALUE_NONE,
-                'Enable debug messages.'
-            )->addOption(
                 'conf',
                 null,
                 InputOption::VALUE_REQUIRED,
@@ -33,7 +28,8 @@ class HeartbeatCommand extends Command
     }
 
     /**
-     * Loop forever sending heartbeat updates to the key.
+     * Watch the container's key, returning as soon as the key disappears.
+     * This means the container has been requested to exit.
      * @param InputInterface $input
      * @param OutputInterface $output
      * @return int Returns 0 when container key is deleted (external shutdown request).
@@ -41,23 +37,12 @@ class HeartbeatCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output)
     {
         $conf = $input->getOption('conf');
-        $debug = $input->getOption('debug');
         $clusterControl = new ClusterControl($conf);
 
-        // First time we set the key because it should not exist.
-        $count = 0;
-        if ($debug) $output->write("<debug>Heartbeat 0</debug>", true);
-        $clusterControl->setKey($count);
-
-        // Keep refreshing the key, exiting if someone else deleted the key.
-        do {
-            sleep($clusterControl->heartbeatInterval());
-            $count = $count + 1;
-            if ($debug) $output->write("<debug>Heartbeat $count</debug>", true);
-        } while ($clusterControl->updateKey($count));
+        // Keep fetching the key until we fail.
+        $clusterControl->watchKey();
 
         // Graceful exit.
-        if ($debug) $output->write("<debug>Heartbeat exit</debug>", true);
         return 0;
     }
 }

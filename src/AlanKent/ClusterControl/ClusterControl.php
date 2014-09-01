@@ -4,6 +4,7 @@ namespace AlanKent\ClusterControl;
 
 use AlanKent\ClusterControl\Handlers\Handler;
 use LinkORB\Component\Etcd\Client as EtcdClient;
+use LinkORB\Component\Etcd\Exception\KeyNotFoundException;
 
 class ClusterControl
 {
@@ -69,7 +70,7 @@ class ClusterControl
             if (!($handler instanceof Handler)) {
                 throw new \Exception("Specified handler '$handlerName' does not implement the Handler interface.");
             }
-            $this->clusterHandlers[$cluster['name']] = $handler;
+            $this->clusterHandlers[$handlerName] = $handler;
         }
 
         $this->etcd = new EtcdClient($server);
@@ -78,6 +79,7 @@ class ClusterControl
     /**
      * Set the current container's key in etcd with a TTL value as specified
      * by the configuration file.
+     * @param string $data The value to set the key to.
      */
     public function setKey($data)
     {
@@ -88,6 +90,7 @@ class ClusterControl
     /**
      * Update the current container's key in etcd with a TTL value as specified
      * by the configuration file. If the key does not exist this will fail.
+     * @param string $data The value to set the key to.
      * @return bool Returns true if key was updated, false if key no longer exists.
      */
     public function updateKey($data)
@@ -95,6 +98,21 @@ class ClusterControl
         // The value for the key is empty at present.
         $resp = $this->etcd->set($this->selfKey, $data, $this->ttl, ['prevExist' => 'true']);
         return !isset($resp['errorCode']);
+    }
+
+    /**
+     * Watch until the key is removed, then return.
+     */
+    public function watchKey()
+    {
+        try {
+            while (true) {
+                $value = $this->etcd->get($this->selfKey, ['wait' => 'true']);
+                echo "DEBUG: watchKey() = $value\n";
+            }
+        } catch (KeyNotFoundException $ex) {
+            // Ignore this - it is expected when the key has gone away.
+        }
     }
 
     /**

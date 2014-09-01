@@ -96,7 +96,8 @@ is illustrative only.)
     (sleep 5 ; bin/clustercontrol cc:heartbeat ; apachectl graceful-stop) &
 
     # Watch for the key disappearing, and exit immediately (don't wait for heartbeat)
-    (sleep 5 ; bin/clustercontrol cc:watchkey ; apachectl graceful-stop) &
+    # Make sure the heartbeat had a chance to set the first heartbeat however.
+    (sleep 9 ; bin/clustercontrol cc:watchkey ; apachectl graceful-stop) &
 
     # Start up web server, container will exit when this exits.
     apache -D FOREGROUND

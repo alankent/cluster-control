@@ -105,14 +105,11 @@ class ClusterControl
      */
     public function watchKey()
     {
-        try {
-            while (true) {
-                $value = $this->etcd->get($this->selfKey, ['wait' => 'true']);
-                echo "DEBUG: watchKey() = $value\n";
-            }
-        } catch (KeyNotFoundException $ex) {
-            // Ignore this - it is expected when the key has gone away.
-        }
+        // Get the value, but waiting until some change.
+        // If 'value' is not set, then key has been removed.
+        do {
+            $node = $this->etcd->getNode($this->selfKey, ['wait' => 'true']);
+        } while (isset($node['value']));
     }
 
     /**

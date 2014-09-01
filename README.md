@@ -95,6 +95,9 @@ is illustrative only.)
     # to make server shut down), so when it returns may as well ask apache to shut down.
     (sleep 5 ; bin/clustercontrol cc:heartbeat ; apachectl graceful-stop) &
 
+    # Watch for the key disappearing, and exit immediately (don't wait for heartbeat)
+    (sleep 5 ; bin/clustercontrol cc:watchkey ; apachectl graceful-stop) &
+
     # Start up web server, container will exit when this exits.
     apache -D FOREGROUND
 

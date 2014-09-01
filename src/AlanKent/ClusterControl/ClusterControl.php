@@ -49,14 +49,14 @@ class ClusterControl
      * Constructor.
      * @param string $configFilename The configuration file to read from.
      */
-    public function __construct(string $configFilename)
+    public function __construct($configFilename)
     {
         $contents = file_get_contents($configFilename);
         $config = json_decode(utf8_encode($contents), true);
 
         $this->selfKey = $config['self']['key'];
         $this->ttl = $config['self']['ttl'];
-        $this->heartbeatInterval = $config['self']['heatbeat'];
+        $this->heartbeatInterval = $config['self']['heartbeat'];
 
         $server = $config['etcd']['server'];
 
@@ -79,10 +79,10 @@ class ClusterControl
      * Set the current container's key in etcd with a TTL value as specified
      * by the configuration file.
      */
-    public function setKey()
+    public function setKey($data)
     {
         // The value for the key is empty at present.
-        $this->etcd->set($this->selfKey, '', $this->ttl);
+        $this->etcd->set($this->selfKey, $data, $this->ttl);
     }
 
     /**
@@ -90,18 +90,11 @@ class ClusterControl
      * by the configuration file. If the key does not exist this will fail.
      * @return bool Returns true if key was updated, false if key no longer exists.
      */
-    public function updateKey()
+    public function updateKey($data)
     {
-        try {
-            // The value for the key is empty at present.
-            $this->etcd->set($this->selfKey, '', $this->ttl, 'prevExist=true');
-        }
-        catch (KeyNotFoundException $e) {
-            // Exit cleanly with 'false' to indicate key no longer exists.
-            // This indicates an external request to shutdown.
-            return false;
-        }
-        return true;
+        // The value for the key is empty at present.
+        $resp = $this->etcd->set($this->selfKey, $data, $this->ttl, ['prevExist' => 'true']);
+        return !isset($resp['errorCode']);
     }
 
     /**
@@ -135,7 +128,6 @@ class ClusterControl
             $url .= '?wait=true&waitIndex=' . $waitIndex;
         }
         $body = $this->etcd->doRequest($url);
-        var_dump($body);
         return array();
     }
 

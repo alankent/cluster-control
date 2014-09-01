@@ -26,12 +26,12 @@ class ClusterWatchCommand extends Command
             )->addOption(
                 'cluster',
                 null,
-                InputArgument::VALUE_REQUIRED,
+                InputOption::VALUE_REQUIRED,
                 'Cluster name to watch.'
             )->addOption(
                 'index',
                 null,
-                InputArgument::VALUE_REQUIRED,
+                InputOption::VALUE_REQUIRED,
                 'Wait index to start watching from.'
             )->addArgument(
                 'exec-command',

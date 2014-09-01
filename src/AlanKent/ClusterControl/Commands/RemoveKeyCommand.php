@@ -21,7 +21,7 @@ class RemoveKeyCommand extends Command
             ->addOption(
                 'conf',
                 null,
-                InputOption::VALUE_OPTIONAL,
+                InputOption::VALUE_REQUIRED,
                 'Configuration file',
                 ClusterControl::DEFAULT_CONFIG_FILE
             );

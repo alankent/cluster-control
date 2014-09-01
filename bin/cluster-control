@@ -21,5 +21,8 @@ require $loader;
 
 $application = new Application('Cluster Control Run Tool', '1.0.0');
 $application->setCatchExceptions(true);
-$application->add(new \AlanKent\ClusterControl\Commands\RunCommand());
+$application->add(new \AlanKent\ClusterControl\Commands\ClusterPrepareCommand());
+$application->add(new \AlanKent\ClusterControl\Commands\ClusterWatchCommand());
+$application->add(new \AlanKent\ClusterControl\Commands\HeartBeatCommand());
+$application->add(new \AlanKent\ClusterControl\Commands\RemoveKeyCommand());
 $application->run();

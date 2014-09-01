@@ -21,13 +21,13 @@ class ClusterPrepareCommand extends Command
             )->addOption(
                 'conf',
                 null,
-                InputOption::VALUE_OPTIONAL,
+                InputOption::VALUE_REQUIRED,
                 'Configuration file',
                 ClusterControl::DEFAULT_CONFIG_FILE
             )->addOption(
                 'cluster',
                 null,
-                InputArgument::VALUE_REQUIRED,
+                InputOption::VALUE_REQUIRED,
                 'Cluster name to refresh.'
             );
     }

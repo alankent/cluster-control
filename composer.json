@@ -21,6 +21,6 @@
             "AlanKent\\": "src/"
         }
     },
-    "bin": ["bin/etcd-php"],
+    "bin": ["bin/cluster-control"],
     "license": "???"
 }

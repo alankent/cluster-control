@@ -47,12 +47,16 @@ The script is driven from a JSON configuration file.
         },
         "clusters": [
             {
+                "name": "redis",
                 "path": "/clusters/redis",
-                "handler": "AlanKent\\ClusterControl\\Handlers\\RedisHandler"
+                "handler": "AlanKent\\ClusterControl\\Handlers\\RedisHandler",
+                "handlerConfig": "filename.conf"
             },
             {
+                "name": "mysql",
                 "path": "/clusters/mysql",
-                "handler:" "AlanKent\\ClusterControl\\Handlers\\MySQLHandler"
+                "handler:" "AlanKent\\ClusterControl\\Handlers\\MySQLHandler",
+                "handlerConfig": "filename.conf"
             }
         ]
     }
@@ -70,3 +74,29 @@ to process changes in each cluster. E.g. if a new database server is available,
 the file containing the list of database servers would be rewritten and the
 appropriate server informed of the change (e.g. by sending a signal to the
 relevant process).
+
+## Sample Startup
+
+The following shows an example start up shell script for an apache server that
+connects to a cluster of Redis servers and a cluster of MySQL instances. (This
+is illustrative only.)
+
+    #!/bin/sh
+
+    # Refresh cluster member configuration files before we start web server.
+    REDIS_INDEX=$(bin/clustercontrol cc:clusterprepare --cluster redis)
+    MYSQL_INDEX=$(bin/clustercontrol cc:clusterprepare --cluster mysql)
+
+    # Sleep a bit to give apache a chance to start up before we tell it to restart.
+    (sleep 10 ; bin/clustercontrol cc:clusterwatch --cluster redis --index $REDIS_INDEX apachectl graceful) &
+    (sleep 10 ; bin/clustercontrol cc:clusterwatch --cluster mysql --index $MYSQL_INDEX apachectl graceful) &
+
+    # Start the heartbeat generator. Returns when fails to update key (e.g. if deleted
+    # to make server shut down), so when it returns may as well ask apache to shut down.
+    (sleep 5 ; bin/clustercontrol cc:heartbeat ; apachectl graceful-stop) &
+
+    # Start up web server, container will exit when this exits.
+    apache -D FOREGROUND
+
+    # Double check key has been removed (it will timeout anyway due to TTL)
+    bin/clustercontrol cc:removekey

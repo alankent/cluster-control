@@ -24,12 +24,6 @@ class WatchKeyCommand extends Command
                 InputOption::VALUE_REQUIRED,
                 'Configuration file',
                 ClusterControl::DEFAULT_CONFIG_FILE
-            )
-            ->addOption(
-                'debug',
-                null,
-                InputOption::VALUE_NONE,
-                'Enable debugging.'
             );
     }
 
@@ -43,7 +37,7 @@ class WatchKeyCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output)
     {
         $conf = $input->getOption('conf');
-        $debug = $input->getOption('debug');
+        $debug = $output->isVerbose();
 
         $clusterControl = new ClusterControl($conf, $debug);
 

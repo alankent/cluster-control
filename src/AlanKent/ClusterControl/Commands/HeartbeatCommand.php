@@ -17,12 +17,6 @@ class HeartbeatCommand extends Command
             ->setName('cc:heartbeat')
             ->setDescription(
                 'Periodically update etcd entry with a TTL to indicate we are still alive.'
-            )
-            ->addOption(
-                'debug',
-                null,
-                InputOption::VALUE_NONE,
-                'Enable debug messages.'
             )->addOption(
                 'conf',
                 null,
@@ -41,7 +35,7 @@ class HeartbeatCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output)
     {
         $conf = $input->getOption('conf');
-        $debug = $input->getOption('debug');
+        $debug = $output->isVerbose();
         $clusterControl = new ClusterControl($conf, $debug);
 
         // First time we set the key because it should not exist.

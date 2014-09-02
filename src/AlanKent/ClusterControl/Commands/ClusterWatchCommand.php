@@ -23,23 +23,16 @@ class ClusterWatchCommand extends Command
                 InputOption::VALUE_REQUIRED,
                 'Configuration file',
                 ClusterControl::DEFAULT_CONFIG_FILE
-            )->addOption(
-                'cluster',
-                null,
-                InputOption::VALUE_REQUIRED,
-                'Cluster name to watch.'
-            )->addOption(
-                'waitIndex',
-                null,
-                InputOption::VALUE_REQUIRED,
-                'Wait index to start watching from.'
-            )->addOption(
-                'debug',
-                null,
-                InputOption::VALUE_NONE,
-                'Enable debugging.'
             )->addArgument(
-                'exec-command',
+                'cluster',
+                InputArgument::REQUIRED,
+                'Cluster name to watch.'
+            )->addArgument(
+                'index',
+                InputArgument::REQUIRED,
+                'Wait index to start watching from.'
+            )->addArgument(
+                'exec',
                 InputArgument::REQUIRED,
                 'Command to execute'
             )->addArgument(
@@ -60,10 +53,10 @@ class ClusterWatchCommand extends Command
     {
         $conf = $input->getOption('conf');
         $cluster = $input->getArgument('cluster');
-        $waitIndex = $input->getOption('waitindex');
-        $debug = $input->getOption('debug');
-        $command = $input->getArgument('exec-command');
+        $waitIndex = $input->getArgument('index');
+        $command = $input->getArgument('exec');
         $arguments = $input->getArgument('argument');
+        $debug = $output->isVerbose();
 
         // Form command to execute when configuration is changed.
         $exec = escapeshellcmd($command);
@@ -73,13 +66,20 @@ class ClusterWatchCommand extends Command
 
         $clusterControl = new ClusterControl($conf, $debug);
 
-        // Fetch the file the first time.
-        $output->write('<info>Starting to watch cluster "'.$cluster.'".</info>');
-        $resp = $clusterControl->readClusterMembers($cluster, $waitIndex);
-        $previousMembers = $resp['members'];
+        $output->writeln('<info>Starting to watch cluster "'.$cluster.'".</info>');
+
+        // Unfortunately, there seems to be no way to ask all the entries at
+        // the previous wait version. It tells you additions and removals,
+        // not the whole directory. So the first little change will always
+        // trigger rewriting the cluster membership.
+        $previousMembers = [];
+
+        // Wait for something to change.
+        $clusterControl->waitClusterMembers($cluster, $waitIndex);
 
         // Loop reading the cluster members and writing to config file.
-        while ($resp) {
+        while ($resp = $clusterControl->readClusterMembers($cluster)) {
+
             $waitIndex = $resp['index'];
             $clusterMembers = $resp['members'];
 
@@ -89,17 +89,17 @@ class ClusterWatchCommand extends Command
             if ($clusterMembers != $previousMembers) {
 
                 // Membership has changed.
-                $output->write('<info>Membership of "'.$cluster.'" has changed - writing new configuration file.</info>');
+                $output->writeln('<info>Membership of "'.$cluster.'" has changed - writing new configuration file.</info>');
                 $clusterControl->writeClusterConfig($cluster, $clusterMembers);
                 $previousMembers = $clusterMembers;
 
                 // Run command to tell server about the change (e.g. restart server).
-                $output->write('<info>Tell service to load new members: '.$exec.'</info>');
+                $output->writeln('<info>Telling service to load new members: '.$exec.'</info>');
                 passthru($exec);
             }
 
-            // Wait for next possible change in membership of cluster.
-            $resp = $clusterControl->readClusterMembers($cluster, $waitIndex);
+            // Wait for something to change.
+            $clusterControl->waitClusterMembers($cluster, $waitIndex);
         }
 
         // Something went wrong reading the cluster. That should never happen.

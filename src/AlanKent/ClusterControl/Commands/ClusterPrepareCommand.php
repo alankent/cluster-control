@@ -16,24 +16,17 @@ class ClusterPrepareCommand extends Command
         $this
             ->setName('cc:clusterprepare')
             ->setDescription(
-                'Read the specified cluster and write the config file with the current cluster members. '
-                . 'Returns the watch index on stdout for cc:clusterwatch.'
+                'Read the specified cluster and write the config file with the current cluster members.'
             )->addOption(
                 'conf',
                 null,
                 InputOption::VALUE_REQUIRED,
                 'Configuration file',
                 ClusterControl::DEFAULT_CONFIG_FILE
-            )->addOption(
+            )->addArgument(
                 'cluster',
-                null,
-                InputOption::VALUE_REQUIRED,
+                InputArgument::REQUIRED,
                 'Cluster name to refresh.'
-            )->addOption(
-                'debug',
-                null,
-                InputOption::VALUE_NONE,
-                'Enable debugging.'
             );
     }
 
@@ -47,8 +40,8 @@ class ClusterPrepareCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output)
     {
         $conf = $input->getOption('conf');
-        $cluster = $input->getOption('cluster');
-        $debug = $input->getOption('debug');
+        $cluster = $input->getArgument('cluster');
+        $debug = $output->isVerbose();
 
         $clusterControl = new ClusterControl($conf, $debug);
 

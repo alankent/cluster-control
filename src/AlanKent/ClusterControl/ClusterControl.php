@@ -135,29 +135,41 @@ class ClusterControl
     }
 
     /**
-     * @param string $cluster
-     * @param $waitIndex
+     * Read members of a cluster (do an etcd 'ls' on the membership of a cluster).
+     * @param string $cluster The cluster name to look in.
      * @return array Returns array with 'index' holding an integer and 'members' holding
      * an array of strings, or null if failed to read directory.
      */
-    public function readClusterMembers($cluster, $waitIndex)
+    public function readClusterMembers($cluster)
     {
-        $options = ['recursive' => 'true'];
-        if ($waitIndex != null) {
-            $options['wait'] = 'true';
-            $options['waitIndex'] = $waitIndex;
-        }
+        // This must not do a wait=true. Doing a wait=true changes the response to show
+        // what was added or removed, not the full directory listing.
+        $options = ['recursive'=>'true'];
+
         $resp = $this->etcd->curl('GET', $this->clusterPaths[$cluster], $options);
 
         $index = $resp['headers']['x-etcd-index'];
         $members = array();
-        foreach ($resp['body']['nodes'] as $dir) {
+        foreach ($resp['body']['node']['nodes'] as $dir) {
             $path = $dir['key'];
             $key = substr(strrchr($path, '/'), 1);
             $members[] = $key;
         }
 
         return ['index' => $index, 'members' => $members];
+    }
+
+    /**
+     * Wait on a directory until some change occurs in that directory.
+     * @param string $cluster The cluster name to look in.
+     * @param $waitIndex The wait index to start waiting from.
+     */
+    public function waitClusterMembers($cluster, $waitIndex)
+    {
+        // Wait until something has changed, but use readClusterMembers() to get
+        // the full directory contents. (This GET returns a delta.)
+        $options = ['recursive'=>'true', 'wait'=>'true', 'waitIndex'=>$waitIndex];
+        $resp = $this->etcd->curl('GET', $this->clusterPaths[$cluster], $options);
     }
 
     /**

@@ -29,10 +29,15 @@ class ClusterWatchCommand extends Command
                 InputOption::VALUE_REQUIRED,
                 'Cluster name to watch.'
             )->addOption(
-                'index',
+                'waitIndex',
                 null,
                 InputOption::VALUE_REQUIRED,
                 'Wait index to start watching from.'
+            )->addOption(
+                'debug',
+                null,
+                InputOption::VALUE_NONE,
+                'Enable debugging.'
             )->addArgument(
                 'exec-command',
                 InputArgument::REQUIRED,
@@ -55,7 +60,8 @@ class ClusterWatchCommand extends Command
     {
         $conf = $input->getOption('conf');
         $cluster = $input->getArgument('cluster');
-        $waitIndex = $input->getArgument('waitindex');
+        $waitIndex = $input->getOption('waitindex');
+        $debug = $input->getOption('debug');
         $command = $input->getArgument('exec-command');
         $arguments = $input->getArgument('argument');
 
@@ -65,7 +71,7 @@ class ClusterWatchCommand extends Command
             $exec .= ' ' . escapeshellarg($argument);
         }
 
-        $clusterControl = new ClusterControl($conf);
+        $clusterControl = new ClusterControl($conf, $debug);
 
         // Fetch the file the first time.
         $output->write('<info>Starting to watch cluster "'.$cluster.'".</info>');

@@ -42,7 +42,7 @@ class HeartbeatCommand extends Command
     {
         $conf = $input->getOption('conf');
         $debug = $input->getOption('debug');
-        $clusterControl = new ClusterControl($conf);
+        $clusterControl = new ClusterControl($conf, $debug);
 
         // First time we set the key because it should not exist.
         $count = 0;

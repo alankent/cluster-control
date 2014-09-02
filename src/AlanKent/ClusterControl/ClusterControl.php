@@ -48,7 +48,7 @@ class ClusterControl
      * Constructor.
      * @param string $configFilename The configuration file to read from.
      */
-    public function __construct($configFilename)
+    public function __construct($configFilename, $debug)
     {
         $contents = file_get_contents($configFilename);
         $config = json_decode(utf8_encode($contents), true);
@@ -74,7 +74,12 @@ class ClusterControl
         }
 
         // Server should be 'http://host:port' - we need to add /v2/keys for etcd v2 API.
-        $this->etcd = new RestClient($server . '/v2/keys');
+        if (substr($server, -1) !== '/') {
+            $server .= '/';
+        }
+        $server .= 'v2/keys';
+
+        $this->etcd = new RestClient($server, $debug);
     }
 
     /**
@@ -84,7 +89,7 @@ class ClusterControl
      */
     public function setKey($data)
     {
-        $this->etcd->curl('PUT', $this->selfKey, $data, ['ttl'=>$this->ttl]);
+        $this->etcd->curl('PUT', $this->selfKey, ['ttl'=>$this->ttl], 'value='.urlencode($data));
     }
 
     /**
@@ -95,7 +100,7 @@ class ClusterControl
      */
     public function updateKey($data)
     {
-        $resp = $this->etcd->curl('PUT', $this->selfKey, $data, ['ttl'=>$this->ttl, 'prevExist'=>'true']);
+        $resp = $this->etcd->curl('PUT', $this->selfKey, ['ttl'=>$this->ttl, 'prevExist'=>'true'], 'value='.urlencode($data));
         return !isset($resp['body']['errorCode']);
     }
 
@@ -108,7 +113,7 @@ class ClusterControl
         // If 'value' is not set, then key has been removed.
         do {
             $resp = $this->etcd->curl('GET', $this->selfKey, ['wait'=>'true']);
-        } while (isset($resp['body']['value']));
+        } while (isset($resp['body']['action']) && $resp['body']['action'] !== 'delete');
     }
 
     /**

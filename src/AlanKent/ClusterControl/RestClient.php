@@ -6,15 +6,17 @@ class RestClient {
 
     private $server;
     private $curlHandle;
+    private $debug;
 
     /**
      * Constructor.
      * @param string $server Base URL for etcd server to connect to.
      */
-    function __construct($server)
+    function __construct($server, $debug)
     {
         $this->server = $server;
         $this->curlHandle = curl_init();
+        $this->debug = $debug;
     }
 
     /**
@@ -43,13 +45,18 @@ class RestClient {
             }
         }
 
+        if ($this->debug) {
+            echo "$method $fullUrl $json\n";
+        }
+
         $options = array(
             CURLOPT_URL => $fullUrl,
             CURLOPT_CUSTOMREQUEST => $method, // GET POST PUT PATCH DELETE HEAD OPTIONS
             CURLOPT_POSTFIELDS => $json,
             CURLOPT_HEADER => true,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 2
+            //CURLOPT_TIMEOUT => 2,
+            CURLOPT_FOLLOWLOCATION => true // Etcd in cluster relocates request to the master
         );
 
         curl_setopt_array($this->curlHandle, $options);
@@ -66,11 +73,19 @@ class RestClient {
             if ($i === 0) {
                 $headers['http_code'] = $line;
             } else {
-                $colon = strpos(':', $line);
+                $colon = strpos($line, ':');
                 $key = strtolower(trim(substr($line, 0, $colon)));
                 $value = trim(substr($line, $colon + 1));
                 $headers[$key] = $value;
             }
+        }
+
+        if ($this->debug) {
+            if (isset($headers['x-etcd-index'])) {
+                $idx = $headers['x-etcd-index'];
+                echo "  X-Etcd-Index = $idx\n";
+            }
+            echo "  BODY = $bodyText\n";
         }
 
         return ['body' => json_decode($bodyText, true), 'headers' => $headers];

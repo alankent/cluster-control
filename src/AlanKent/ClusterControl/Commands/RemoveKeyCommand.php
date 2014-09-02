@@ -22,8 +22,14 @@ class RemoveKeyCommand extends Command
                 'conf',
                 null,
                 InputOption::VALUE_REQUIRED,
-                'Configuration file',
+                'Configuration file.',
                 ClusterControl::DEFAULT_CONFIG_FILE
+            )
+            ->addOption(
+                'debug',
+                null,
+                InputOption::VALUE_NONE,
+                'Enable debugging.'
             );
     }
 
@@ -36,7 +42,8 @@ class RemoveKeyCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output)
     {
         $conf = $input->getOption('conf');
-        $clusterControl = new ClusterControl($conf);
+        $debug = $input->getOption('debug');
+        $clusterControl = new ClusterControl($conf, $debug);
         $clusterControl->removeKey();
         return 0;
     }

@@ -29,6 +29,11 @@ class ClusterPrepareCommand extends Command
                 null,
                 InputOption::VALUE_REQUIRED,
                 'Cluster name to refresh.'
+            )->addOption(
+                'debug',
+                null,
+                InputOption::VALUE_NONE,
+                'Enable debugging.'
             );
     }
 
@@ -43,8 +48,9 @@ class ClusterPrepareCommand extends Command
     {
         $conf = $input->getOption('conf');
         $cluster = $input->getOption('cluster');
+        $debug = $input->getOption('debug');
 
-        $clusterControl = new ClusterControl($conf);
+        $clusterControl = new ClusterControl($conf, $debug);
 
         $resp = $clusterControl->readClusterMembers($cluster, null);
         $waitIndex = $resp['index'];

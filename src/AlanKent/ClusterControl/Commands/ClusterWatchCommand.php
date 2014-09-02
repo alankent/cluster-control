@@ -73,6 +73,7 @@ class ClusterWatchCommand extends Command
         // not the whole directory. So the first little change will always
         // trigger rewriting the cluster membership.
         $previousMembers = [];
+        $prevWaitIndex = 0;
 
         // Wait for something to change.
         $clusterControl->waitClusterMembers($cluster, $waitIndex);
@@ -98,8 +99,15 @@ class ClusterWatchCommand extends Command
                 passthru($exec);
             }
 
+            // I once hit a potential etcd bug where the waitindex did not increment.
+            // Avoid hammering etcd in this case - give it a chance to catch its breath.
+            if ($waitIndex == $prevWaitIndex) {
+                sleep(2);
+            }
+
             // Wait for something to change.
             $clusterControl->waitClusterMembers($cluster, $waitIndex);
+            $prevWaitIndex = $waitIndex;
         }
 
         // Something went wrong reading the cluster. That should never happen.

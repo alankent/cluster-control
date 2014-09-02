@@ -3,13 +3,11 @@
 namespace AlanKent\ClusterControl;
 
 use AlanKent\ClusterControl\Handlers\Handler;
-use LinkORB\Component\Etcd\Client as EtcdClient;
-use LinkORB\Component\Etcd\Exception\KeyNotFoundException;
 
 class ClusterControl
 {
     /**
-     * @var EtcdClient The connection to the etcd server.
+     * @var RestClient The connection to the etcd server.
      */
     private $etcd;
 
@@ -75,7 +73,8 @@ class ClusterControl
             $this->clusterHandlers[$cluster['name']] = $handler;
         }
 
-        $this->etcd = new EtcdClient($server);
+        // Server should be 'http://host:port' - we need to add /v2/keys for etcd v2 API.
+        $this->etcd = new RestClient($server . '/v2/keys');
     }
 
     /**
@@ -85,8 +84,7 @@ class ClusterControl
      */
     public function setKey($data)
     {
-        // The value for the key is empty at present.
-        $this->etcd->set($this->selfKey, $data, $this->ttl);
+        $this->etcd->curl('PUT', $this->selfKey, $data, ['ttl'=>$this->ttl]);
     }
 
     /**
@@ -97,9 +95,8 @@ class ClusterControl
      */
     public function updateKey($data)
     {
-        // The value for the key is empty at present.
-        $resp = $this->etcd->set($this->selfKey, $data, $this->ttl, ['prevExist' => 'true']);
-        return !isset($resp['errorCode']);
+        $resp = $this->etcd->curl('PUT', $this->selfKey, $data, ['ttl'=>$this->ttl, 'prevExist'=>'true']);
+        return !isset($resp['body']['errorCode']);
     }
 
     /**
@@ -110,17 +107,17 @@ class ClusterControl
         // Get the value, but waiting until some change.
         // If 'value' is not set, then key has been removed.
         do {
-            $node = $this->etcd->getNode($this->selfKey, ['wait' => 'true']);
-        } while (isset($node['value']));
+            $resp = $this->etcd->curl('GET', $this->selfKey, ['wait'=>'true']);
+        } while (isset($resp['body']['value']));
     }
 
     /**
      * Delete the container's key in etcd. This is done when the container
      * is about to exit.
      */
-    public function removeKey()
+    public function removeKey($options = null)
     {
-        $this->etcd->rm($this->selfKey);
+        $this->etcd->curl('DELETE', $this->selfKey, $options);
     }
 
     /**
@@ -145,23 +142,16 @@ class ClusterControl
             $options['wait'] = 'true';
             $options['waitIndex'] = $waitIndex;
         }
-        $node = $this->etcd->getNode($this->clusterPaths[$cluster], $options);
-echo "NODE: ";
-var_dump($node);
+        $resp = $this->etcd->curl('GET', $this->clusterPaths[$cluster], $options);
 
-$index = $node['modifiedIndex'];
+        $index = $resp['headers']['x-etcd-index'];
         $members = array();
-        foreach ($node['nodes'] as $dir) {
+        foreach ($resp['body']['nodes'] as $dir) {
             $path = $dir['key'];
             $key = substr(strrchr($path, '/'), 1);
             $members[] = $key;
-
- if ($dir['modifiedIndex'] > $index) {
-$index = $dir['modifiedIndex'];
-}
         }
 
-echo "index = $index\n";
         return ['index' => $index, 'members' => $members];
     }
 

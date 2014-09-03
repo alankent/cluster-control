@@ -4,7 +4,7 @@ header("Content-Type: text/plain");
 header("X-Test: PHP Invoked");
 
 $jsonFile = "dbservers.json";
-echo "($jsonFile) ";
+#echo "($jsonFile) ";
 
 if (!file_exists($jsonFile)) {
 
@@ -17,7 +17,7 @@ if (!file_exists($jsonFile)) {
 
     $dbservers = json_decode($json, true);
     foreach ($dbservers as $svr) {
-        echo "$svr=";
+        #echo "$svr=";
         try {
             $content = file_get_contents("http://".$svr."/");
             if (strlen($content) > 0) {

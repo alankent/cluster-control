@@ -21,8 +21,10 @@ RUN rm /var/www/html/index.html
 ADD index.php /var/www/html/index.php
 RUN chmod 644 /var/www/html/index.php
 
-# Add Cluster Control scripts. (A bit crude, but good enough for now.)
-ADD ../.. /cluster-control
+# Add Cluster Control scripts.
+RUN mkdir /cluster-control && cd /cluster-control && curl -sS https://getcomposer.org/installer | php
+ADD composer.json /cluster-control/composer.json
+RUN cd /cluster-control && php composer.phar install
 
 # Add scripts to create cluster-control.conf substituting in appropriate
 # envrionment variables.

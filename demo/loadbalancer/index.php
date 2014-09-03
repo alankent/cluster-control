@@ -1,21 +1,36 @@
 <?php
 
 header("Content-Type: text/plain");
+header("X-Test: PHP Invoked");
 
 $jsonFile = "webservers.json";
+echo "Reading $jsonFile...\n";
 
 if (!file_exists($jsonFile)) {
-    throw \Exception("JSON file $jsonFile does not exist");
+
+    echo "File does not exist\n";
+
+} else {
+
+    $json = file_get_contents($jsonFile);
+    echo "$jsonFile: $json\n\n";
+
+    $webservers = json_decode($json, true);
+    foreach ($webservers as $svr) {
+        echo "$svr: ";
+        try {
+            $content = file_get_contents("http://".$svr."/");
+            if (strlen($content) > 0) {
+                echo $content;
+            } else {
+                echo "(no response)\n";
+            }
+        }
+        catch (\Exception $ex) {
+            echo "$ex\n";
+        }
+    }
+
 }
 
-$webservers = json_decode(file_get_contents("webservers.json"));
-
-foreach ($webservers as $svr) {
-    try {
-        $resp = file_get_contents("http://".$svr."/");
-    }
-    catch (Exception $ex) {
-        echo "$ex\n";
-    }
-    echo "$svr: $resp";
-}
+echo "\nDone\n";

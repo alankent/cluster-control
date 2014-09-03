@@ -1,8 +1,9 @@
 #!/bin/sh
 
-# Requires ETCD URL as $1 - typically http://172.17.42.1:4001/
+set -x
 
 etcdctl mkdir /clusterdemo
 etcdctl mkdir /clusterdemo/loadbalancer
 etcdctl mkdir /clusterdemo/webserver
 etcdctl mkdir /clusterdemo/dbserver
+etcdctl ls /clusterdemo

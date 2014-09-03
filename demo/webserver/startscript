@@ -15,16 +15,35 @@ cat cluster-control.conf
 # Refresh cluster member configuration files before we start database server.
 DBSERVER_INDEX=$($CLUSTERCONTROL cc:clusterprepare dbserver)
 
-# Sleep a bit to give apache a chance to start up before we tell it to restart.
-(sleep 10 ; $CLUSTERCONTROL cc:clusterwatch dbserver $DBSERVER_INDEX apachectl graceful) &
 
-# Start the heartbeat generator. Returns when fails to update key (e.g. if deleted
-# to make server shut down), so when it returns may as well ask apache to shut down.
-(sleep 5 ; $CLUSTERCONTROL cc:heartbeat ; apachectl graceful-stop) &
+# Spawn background job to wait for server to accept connections, then signal
+# we are alive to the world and start watching for change events.
+(
+    # Convert host:port into host/port.
+    PUBLIC_HOST_SLASH_PORT=$(echo $PUBLIC_HOST_AND_PORT | tr : /)
 
-# Watch for the key disappearing, and exit immediately (don't wait for heartbeat)
-# Make sure the heartbeat had a chance to set the first heartbeat however.
-(sleep 9 ; $CLUSTERCONTROL cc:watchkey ; apachectl graceful-stop) &
+    # Loop in background until server is accepting TCP connections.
+    echo 'Waiting for web server to accept connections...'
+    while ! timeout 1 bash -c "cat < /dev/null > /dev/tcp/$PUBLIC_HOST_SLASH_PORT"; do
+        echo 'Still waiting...'
+    done
+    echo 'Web server is up!'
+
+    # Send a single heartbeat to create the key in etcd indicating we are alive.
+    $CLUSTERCONTROL cc:heartbeat --once
+
+    # Watch for the key disappearing, and exit immediately (don't wait for heartbeat)
+    # We know at least one heartbeat has occurred (because of the cc:heartbeat --once above)
+    ($CLUSTERCONTROL cc:watchkey ; apachectl graceful-stop) &
+
+    # Start the heartbeat generator. Returns when fails to update key (e.g. if deleted
+    # to make server shut down), so when it returns may as well ask apache to shut down.
+    ($CLUSTERCONTROL cc:heartbeat ; apachectl graceful-stop ; sleep 5 ; apachectl stop) &
+
+    # Tell Apache to restart if any configuration changes (not strictly required as
+    # the current application does not cache anything - this is for illustration however)
+    $CLUSTERCONTROL cc:clusterwatch dbserver $DBSERVER_INDEX apachectl graceful &
+) &
 
 # Start up web server, container will exit when this exits.
 /usr/sbin/apache2 -D FOREGROUND

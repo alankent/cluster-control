@@ -153,7 +153,7 @@ class ClusterControl
 
         $index = $resp['headers']['x-etcd-index'];
         $members = array();
-        if (isset($resp['body'] && isset($resp['body']['node']) && isset($resp['body']['node']['nodes'])) {
+        if (isset($resp['body']) && isset($resp['body']['node']) && isset($resp['body']['node']['nodes'])) {
             foreach ($resp['body']['node']['nodes'] as $dir) {
                 $path = $dir['key'];
                 $key = substr(strrchr($path, '/'), 1);

@@ -31,3 +31,5 @@ WEBSERVER_INDEX=$($CLUSTERCONTROL cc:clusterprepare webserver)
 
 # Double check key has been removed (it will timeout anyway due to TTL)
 $CLUSTERCONTROL cc:removekey
+
+exit 0

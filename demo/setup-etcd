@@ -2,8 +2,74 @@
 
 set -x
 
+ETCD_URL=http://172.17.42.1:4001/
+PUBLIC_IP=10.64.255.235
+
+echo "+++ Creating Etcd directories"
+
 etcdctl mkdir /clusterdemo
 etcdctl mkdir /clusterdemo/loadbalancer
 etcdctl mkdir /clusterdemo/webserver
 etcdctl mkdir /clusterdemo/dbserver
 etcdctl ls /clusterdemo
+
+echo "+++ Build and start all the web servers"
+
+(
+    cd loadbalancer
+    ./build.sh
+    ./run.sh $ETCD_URL $PUBLIC_IP 8100
+)
+
+(
+    cd webserver
+    ./build.sh
+    ./run.sh $ETCD_URL $PUBLIC_IP 8110
+    ./run.sh $ETCD_URL $PUBLIC_IP 8111
+    ./run.sh $ETCD_URL $PUBLIC_IP 8112
+)
+
+(
+    cd dbserver
+    ./build.sh
+    ./run.sh $ETCD_URL $PUBLIC_IP 8120
+    ./run.sh $ETCD_URL $PUBLIC_IP 8121
+)
+
+sleep 5
+
+echo "+++ Check that all the servers registered themselves in etcd"
+
+etcdctl ls /clusterdemo/loadbalancer
+etcdctl ls /clusterdemo/webserver
+etcdctl ls /clusterdemo/dbserver
+
+echo "+++ First report"
+
+curl -s http://${PUBLIC_IP}:8100/
+
+echo "+++ Add a database server"
+
+curl -s http://${PUBLIC_IP}:8100/
+(cd dbserver && ./run.sh $ETCD_URL $PUBLIC_IP 8122)
+curl -s http://${PUBLIC_IP}:8100/
+sleep 2
+curl -s http://${PUBLIC_IP}:8100/
+
+echo "+++ Remove a web server"
+
+etcdctl rm /clusterdemo/webserver/${PUBLIC_IP}:8110
+curl -s http://${PUBLIC_IP}:8100/
+sleep 2
+curl -s http://${PUBLIC_IP}:8100/
+
+echo "+++ Shut everything down..."
+
+etcdctl rm /clusterdemo/loadbalancer/${PUBLIC_IP}:8100
+etcdctl rm /clusterdemo/webserver/${PUBLIC_IP}:8110
+etcdctl rm /clusterdemo/webserver/${PUBLIC_IP}:8111
+etcdctl rm /clusterdemo/webserver/${PUBLIC_IP}:8112
+etcdctl rm /clusterdemo/webserver/${PUBLIC_IP}:8113
+etcdctl rm /clusterdemo/dbserver/${PUBLIC_IP}:8120
+etcdctl rm /clusterdemo/dbserver/${PUBLIC_IP}:8121
+etcdctl rm /clusterdemo/dbserver/${PUBLIC_IP}:8122

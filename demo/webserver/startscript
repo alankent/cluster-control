@@ -31,3 +31,5 @@ DBSERVER_INDEX=$($CLUSTERCONTROL cc:clusterprepare dbserver)
 
 # Double check key has been removed (it will timeout anyway due to TTL)
 $CLUSTERCONTROL cc:removekey
+
+exit 0

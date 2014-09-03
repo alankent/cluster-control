@@ -28,3 +28,5 @@ echo $PUBLIC_HOST_AND_PORT > html/myname.txt
 
 # Double check key has been removed (it will timeout anyway due to TTL)
 $CLUSTERCONTROL cc:removekey
+
+exit 0

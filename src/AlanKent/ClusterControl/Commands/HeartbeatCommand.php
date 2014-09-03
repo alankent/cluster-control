@@ -29,7 +29,7 @@ class HeartbeatCommand extends Command
                 'once',
                 null,
                 InputOption::VALUE_NONE,
-                'Send a single heartbeat then exit.',
+                'Send a single heartbeat then exit.'
             );
     }
 

@@ -44,9 +44,6 @@ WEBSERVER_INDEX=$($CLUSTERCONTROL cc:clusterprepare webserver)
     $CLUSTERCONTROL cc:clusterwatch webserver $WEBSERVER_INDEX apachectl graceful &
 ) &
 
-# Testing above loop
-sleep 2
-
 # Start up web server, container will exit when this exits.
 /usr/sbin/apache2 -D FOREGROUND
 

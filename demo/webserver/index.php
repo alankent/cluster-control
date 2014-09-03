@@ -21,7 +21,7 @@ if (!file_exists($jsonFile)) {
         try {
             $content = file_get_contents("http://".$svr."/");
             if (strlen($content) > 0) {
-                echo $content;
+                echo trim($content);
             } else {
                 echo "(no response)";
             }

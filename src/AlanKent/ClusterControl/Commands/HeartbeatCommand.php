@@ -17,12 +17,19 @@ class HeartbeatCommand extends Command
             ->setName('cc:heartbeat')
             ->setDescription(
                 'Periodically update etcd entry with a TTL to indicate we are still alive.'
-            )->addOption(
+            )
+            ->addOption(
                 'conf',
                 null,
                 InputOption::VALUE_REQUIRED,
                 'Configuration file',
                 ClusterControl::DEFAULT_CONFIG_FILE
+            )
+            ->addOption(
+                'once',
+                null,
+                InputOption::VALUE_NONE,
+                'Send a single heartbeat then exit.',
             );
     }
 
@@ -35,6 +42,7 @@ class HeartbeatCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output)
     {
         $conf = $input->getOption('conf');
+        $once = $output->getOption('once');
         $debug = $output->isVerbose();
         $clusterControl = new ClusterControl($conf, $debug);
 
@@ -44,11 +52,13 @@ class HeartbeatCommand extends Command
         $clusterControl->setKey($count);
 
         // Keep refreshing the key, exiting if someone else deleted the key.
-        do {
-            sleep($clusterControl->heartbeatInterval());
-            $count = $count + 1;
-            if ($debug) $output->write("<debug>Heartbeat $count</debug>", true);
-        } while ($clusterControl->updateKey($count));
+        if (!$once) {
+            do {
+                sleep($clusterControl->heartbeatInterval());
+                $count = $count + 1;
+                if ($debug) $output->write("<debug>Heartbeat $count</debug>", true);
+            } while ($clusterControl->updateKey($count));
+        }
 
         // Graceful exit.
         if ($debug) $output->write("<debug>Heartbeat exit</debug>", true);

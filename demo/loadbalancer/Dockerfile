@@ -6,7 +6,7 @@ MAINTAINER Alan Kent
 # - PUBLIC_HOST_AND_PORT
 
 # Get Apache, mysql client, PHP etc (subset of a full LAMP stack - no MySQL server)
-RUN apt-get update && apt-get install -y apache2 php5 php5-curl curl git
+RUN apt-get update && apt-get install -y apache2 php5 php5-curl curl git zip unzip
 
 # Environment variables from /etc/apache2/apache2.conf
 ENV APACHE_RUN_USER www-data
@@ -22,9 +22,15 @@ ADD index.php /var/www/html/index.php
 RUN chmod 644 /var/www/html/index.php
 
 # Add Cluster Control scripts.
-RUN mkdir /cluster-control && cd /cluster-control && curl -sS https://getcomposer.org/installer | php
-ADD composer.json /cluster-control/composer.json
-RUN cd /cluster-control && php composer.phar install
+RUN mkdir /cluster-control && \
+	cd /cluster-control && \
+	curl -sS https://getcomposer.org/installer | php && \
+	curl -L -O https://github.com/alankent/cluster-control/archive/master.zip && \
+	unzip master.zip && \
+	mv cluster-control-master/* . && \
+	rm cluster-control-master/.gitignore && \
+	rmdir cluster-control-master && \
+	php composer.phar update
 
 # Add scripts to create cluster-control.conf substituting in appropriate
 # envrionment variables.
@@ -32,7 +38,7 @@ ADD create-config.php /var/www/create-config.php
 
 # Add the script to start up the servers.
 ADD startscript /var/www/startscript
-CHMOD 755 /var/www/startscript
+RUN chmod 755 /var/www/startscript
 
 # Expose the web server port
 EXPOSE 80

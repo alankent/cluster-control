@@ -22,7 +22,7 @@ $template = <<<EOF
 EOF;
 
 $s = $template;
-$s = str_replace('ETCD_URL', $_ENV['ETCD_URL'], $s);
-$s = str_replace('PUBLIC_HOST_AND_PORT', $_ENV['PUBLIC_HOST_AND_PORT'], $s);
+$s = str_replace('ETCD_URL', getenv('ETCD_URL'), $s);
+$s = str_replace('PUBLIC_HOST_AND_PORT', urlencode(getenv('PUBLIC_HOST_AND_PORT')), $s);
 
 file_put_contents('cluster-control.conf', $s);

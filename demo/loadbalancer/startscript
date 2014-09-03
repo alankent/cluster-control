@@ -2,7 +2,10 @@
 
 cd /var/www
 
-$CLUSTERCONTROL=/cluster-control/bin/clustercontrol
+env
+ls -lR /clust*
+
+CLUSTERCONTROL=/cluster-control/bin/cluster-control
 
 # Create the cluster-control.config file, substituing in the ETC_URL and
 # PUBLIC_HOST_AND_PORT environment variables.
@@ -23,7 +26,7 @@ WEBSERVER_INDEX=$($CLUSTERCONTROL cc:clusterprepare --cluster webservers)
 (sleep 9 ; $CLUSTERCONTROL cc:watchkey ; apachectl graceful-stop) &
 
 # Start up web server, container will exit when this exits.
-apache -D FOREGROUND
+/usr/sbin/apache2 -D FOREGROUND
 
 # Double check key has been removed (it will timeout anyway due to TTL)
 $CLUSTERCONTROL cc:removekey

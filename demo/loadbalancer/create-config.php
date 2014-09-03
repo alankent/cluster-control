@@ -15,7 +15,7 @@ $template = <<<EOF
             "name": "webserver",
             "path": "/clusterdemo/webserver",
             "handler": "AlanKent\\\\ClusterControl\\\\Handlers\\\\JsonHandler",
-            "handlerConfig": "webservers.json"
+            "handlerConfig": "html/webservers.json"
         }
     ]
 }

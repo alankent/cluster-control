@@ -3,10 +3,10 @@
 $template = <<<EOF
 {
     "etcd": {
-        "server": "$ETCD_URL"
+        "server": "ETCD_URL"
     },
     "self": {
-        "key": "/clusterdemo/loadbalancer/$PUBLIC_HOST_AND_PORT",
+        "key": "/clusterdemo/loadbalancer/PUBLIC_HOST_AND_PORT",
         "ttl": 10,
         "heartbeat": 5
     },
@@ -19,10 +19,10 @@ $template = <<<EOF
         }
     ]
 }
-EOF
+EOF;
 
 $s = $template;
-$s = str_replace('$ETCD_URL', env('ETCD_URL'), $s);
-$s = str_replace('$PUBLIC_HOST_AND_PORT', env('PUBLIC_HOST_AND_PORT'), $s);
+$s = str_replace('ETCD_URL', $_ENV['ETCD_URL'], $s);
+$s = str_replace('PUBLIC_HOST_AND_PORT', $_ENV['PUBLIC_HOST_AND_PORT'], $s);
 
 file_put_contents('cluster-control.conf', $s);

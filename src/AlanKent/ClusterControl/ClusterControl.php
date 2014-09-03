@@ -51,6 +51,9 @@ class ClusterControl
     public function __construct($configFilename, $debug)
     {
         $contents = file_get_contents($configFilename);
+        if (!$contents) {
+            throw new \Exception("Unable to read the file '$configFilename'.");
+        }
         $config = json_decode(utf8_encode($contents), true);
 
         $this->selfKey = $config['self']['key'];

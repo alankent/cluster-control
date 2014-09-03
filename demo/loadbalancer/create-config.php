@@ -12,9 +12,9 @@ $template = <<<EOF
     },
     "clusters": [
         {
-            "name": "webservers",
+            "name": "webserver",
             "path": "/clusterdemo/webserver",
-            "handler": "AlanKent\\ClusterControl\\Handlers\\JsonHandler",
+            "handler": "AlanKent\\\\ClusterControl\\\\Handlers\\\\JsonHandler",
             "handlerConfig": "webservers.json"
         }
     ]

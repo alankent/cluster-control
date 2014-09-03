@@ -84,12 +84,12 @@ is illustrative only.)
     #!/bin/sh
 
     # Refresh cluster member configuration files before we start web server.
-    REDIS_INDEX=$(bin/clustercontrol cc:clusterprepare --cluster redis)
-    MYSQL_INDEX=$(bin/clustercontrol cc:clusterprepare --cluster mysql)
+    REDIS_INDEX=$(bin/clustercontrol cc:clusterprepare redis)
+    MYSQL_INDEX=$(bin/clustercontrol cc:clusterprepare mysql)
 
     # Sleep a bit to give apache a chance to start up before we tell it to restart.
-    (sleep 10 ; bin/clustercontrol cc:clusterwatch --cluster redis --index $REDIS_INDEX apachectl graceful) &
-    (sleep 10 ; bin/clustercontrol cc:clusterwatch --cluster mysql --index $MYSQL_INDEX apachectl graceful) &
+    (sleep 10 ; bin/clustercontrol cc:clusterwatch redis $REDIS_INDEX apachectl graceful) &
+    (sleep 10 ; bin/clustercontrol cc:clusterwatch mysql $MYSQL_INDEX apachectl graceful) &
 
     # Start the heartbeat generator. Returns when fails to update key (e.g. if deleted
     # to make server shut down), so when it returns may as well ask apache to shut down.

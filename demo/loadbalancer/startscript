@@ -1,21 +1,22 @@
 #!/bin/sh
 
+set -x
+
 cd /var/www
-
 env
-ls -lR /clust*
 
-CLUSTERCONTROL=/cluster-control/bin/cluster-control
+CLUSTERCONTROL="/cluster-control/bin/cluster-control --verbose"
 
 # Create the cluster-control.config file, substituing in the ETC_URL and
 # PUBLIC_HOST_AND_PORT environment variables.
 php create-config.php
+cat cluster-control.conf
 
 # Refresh cluster member configuration files before we start web server.
-WEBSERVER_INDEX=$($CLUSTERCONTROL cc:clusterprepare --cluster webservers)
+WEBSERVER_INDEX=$($CLUSTERCONTROL cc:clusterprepare webserver)
 
 # Sleep a bit to give apache a chance to start up before we tell it to restart.
-(sleep 10 ; $CLUSTERCONTROL cc:clusterwatch --cluster webservers --index $WEBSERVER_INDEX apachectl graceful) &
+(sleep 10 ; $CLUSTERCONTROL cc:clusterwatch webserver $WEBSERVER_INDEX apachectl graceful) &
 
 # Start the heartbeat generator. Returns when fails to update key (e.g. if deleted
 # to make server shut down), so when it returns may as well ask apache to shut down.

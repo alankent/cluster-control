@@ -104,3 +104,22 @@ is illustrative only.)
 
     # Double check key has been removed (it will timeout anyway due to TTL)
     bin/clustercontrol cc:removekey
+
+## Demostration
+
+A set of Docker files for three types of serves are provided as a demonstration
+along with configuration using this library. Apache+PHP servers are used for
+all the servers for simplicity, but the configuration will be set up the same
+as a single load balancer in front of a farm of N web servers in front of a
+farm of M database servers.
+
+The "load balancer" will actually ask every "web server" a simple request.
+Every web server will ask every "database server" a simple request. Database
+servers will return their ID. Web servers will show the list of database IDs
+they got back. So the load balance will show a page showing the fanout from
+load balancer to web servers to databases. Each web server should return the
+same list of database IDs.
+
+Adding new web servers or database servers should then reflect in the root
+load balancer page consistently shortly after the new Docker containers are
+started.

@@ -1,0 +1,29 @@
+#!/bin/sh
+
+cd /var/www
+
+$CLUSTERCONTROL=/cluster-control/bin/clustercontrol
+
+# Create the cluster-control.config file, substituing in the ETC_URL and
+# PUBLIC_HOST_AND_PORT environment variables.
+php create-config.php
+
+# Refresh cluster member configuration files before we start web server.
+WEBSERVER_INDEX=$($CLUSTERCONTROL cc:clusterprepare --cluster webservers)
+
+# Sleep a bit to give apache a chance to start up before we tell it to restart.
+(sleep 10 ; $CLUSTERCONTROL cc:clusterwatch --cluster webservers --index $WEBSERVER_INDEX apachectl graceful) &
+
+# Start the heartbeat generator. Returns when fails to update key (e.g. if deleted
+# to make server shut down), so when it returns may as well ask apache to shut down.
+(sleep 5 ; $CLUSTERCONTROL cc:heartbeat ; apachectl graceful-stop) &
+
+# Watch for the key disappearing, and exit immediately (don't wait for heartbeat)
+# Make sure the heartbeat had a chance to set the first heartbeat however.
+(sleep 9 ; $CLUSTERCONTROL cc:watchkey ; apachectl graceful-stop) &
+
+# Start up web server, container will exit when this exits.
+apache -D FOREGROUND
+
+# Double check key has been removed (it will timeout anyway due to TTL)
+$CLUSTERCONTROL cc:removekey

@@ -13,7 +13,7 @@ fi
 
 set -x
 
-CONTAINER=$(docker run -d -e ETCD_URL=${1} -e PUBLIC_HOST_AND_PORT=${2}:${3} -p ${3}:80 cluster-control-demo-loadbalancer)
+CONTAINER=$(docker run -d -e ETCD_URL=${1} -e PUBLIC_HOST_AND_PORT=${2}:${3} -p ${3}:80 cluster-control-demo-webserver)
 sleep 3
 docker logs $CONTAINER
 # (sleep 20; docker kill $CONTAINER; docker rm $CONTAINER) &

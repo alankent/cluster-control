@@ -42,7 +42,7 @@ class HeartbeatCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output)
     {
         $conf = $input->getOption('conf');
-        $once = $output->getOption('once');
+        $once = $input->getOption('once');
         $debug = $output->isVerbose();
         $clusterControl = new ClusterControl($conf, $debug);
 

@@ -24,7 +24,7 @@ RUN chmod 644 /var/www/html/index.php
 # Add Cluster Control scripts.
 RUN mkdir /cluster-control && \
 	cd /cluster-control && \
-	curl -sS https://getcomposer.org/installer | php && \
+	curl -s -S https://getcomposer.org/installer | php && \
 	curl -L -O https://github.com/alankent/cluster-control/archive/master.zip && \
 	unzip master.zip && \
 	mv cluster-control-master/* . && \
